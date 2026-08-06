@@ -1,3 +1,4 @@
+from datetime import date
 from enum import Enum
 
 from pydantic import BaseModel
@@ -25,5 +26,9 @@ class BenchmarkCase(BaseModel):
     fixture: str
     expected: BenchmarkExpectation
     source_url: str
+    source_observed_at: date | None = None
     ground_truth: str
+    ground_truth_url: str | None = None
+    ground_truth_observed_at: date | None = None
+    ground_truth_verdict: Verdict | None = None
     mode: BenchmarkMode = BenchmarkMode.SYNTHETIC
