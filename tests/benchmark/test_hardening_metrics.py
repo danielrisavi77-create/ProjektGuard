@@ -67,7 +67,7 @@ def test_pre_cutoff_temporal_integrity_rejects_future_contract_execution_observa
     context = AuditContext(
         project_id="P", as_of=date(2026, 5, 1),
         eligibility=EligibilityPeriod(start=date(2026, 1, 1), end=date(2026, 12, 31)),
-        financials=ProjektFinancials(total_project_cost=Decimal("100"), eligible_cost=Decimal("90"), grant_amount=Decimal("50"), currency="EUR"),
+        financials=ProjectFinancials(total_project_cost=Decimal("100"), eligible_cost=Decimal("90"), grant_amount=Decimal("50"), currency="EUR"),
         contracts=[Contract(
             contract_id="C1", amount=Decimal("100"), currency="EUR", actual_paid=Decimal("120"),
             actual_paid_observed_at=date(2026, 6, 1),
