@@ -3,12 +3,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, Field, model_validator
 
-
-class SourceRef(BaseModel):
-    document_id: str
-    page: int | None = Field(default=None, ge=1)
-    url: str | None = None
-    available_from: date | None = None
+from projektguard.domain.source import SourceRef
 
 
 class EligibilityPeriod(BaseModel):
@@ -108,6 +103,9 @@ class ProjectFinancials(BaseModel):
     current_approved_project_cost: Decimal | None = None
 
 
+from projektguard.domain.evidence import AcceptanceRecord, EvidenceRecord, ExecutionRecord, Indicator
+
+
 class AuditContext(BaseModel):
     project_id: str
     as_of: date
@@ -122,26 +120,19 @@ class AuditContext(BaseModel):
     claimed_cost_ids: list[str] = Field(default_factory=list)
     baseline_changed: bool | None = None
     baseline_approval_source: SourceRef | None = None
+    evidence: list[EvidenceRecord] = Field(default_factory=list)
+    executions: list[ExecutionRecord] = Field(default_factory=list)
+    acceptances: list[AcceptanceRecord] = Field(default_factory=list)
+    indicators: list[Indicator] = Field(default_factory=list)
 
     def active_budget(self) -> BudgetVersion | None:
-        eligible = [
-            budget
-            for budget in self.budget_versions
-            if budget.valid_from <= self.as_of
-            and (budget.valid_to is None or self.as_of <= budget.valid_to)
-        ]
+        eligible = [budget for budget in self.budget_versions if budget.valid_from <= self.as_of and (budget.valid_to is None or self.as_of <= budget.valid_to)]
         if not eligible:
             return None
         return max(eligible, key=lambda budget: budget.version)
 
     def current_approved_budget(self) -> BudgetVersion | None:
-        eligible = [budget for budget in self.budget_versions if budget.approved]
-        eligible = [
-            budget
-            for budget in eligible
-            if budget.valid_from <= self.as_of
-            and (budget.valid_to is None or self.as_of <= budget.valid_to)
-        ]
+        eligible = [budget for budget in self.budget_versions if budget.approved and budget.valid_from <= self.as_of and (budget.valid_to is None or self.as_of <= budget.valid_to)]
         if not eligible:
             return None
         return max(eligible, key=lambda budget: budget.version)
