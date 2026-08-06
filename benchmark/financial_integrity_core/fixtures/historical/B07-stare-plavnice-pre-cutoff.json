@@ -1,0 +1,30 @@
+{
+  "project_id": "B07-STARE-PLAVNICE-PRE-CUTOFF",
+  "as_of": "2019-12-10",
+  "eligibility": {
+    "start": "2018-11-08",
+    "end": "2020-11-08"
+  },
+  "financials": {
+    "total_project_cost": "5248502.50",
+    "eligible_cost": null,
+    "grant_amount": "5238502.50",
+    "currency": "HRK"
+  },
+  "contracts": [
+    {
+      "contract_id": "4-06-Ra/18",
+      "amount": "5112109.13",
+      "currency": "HRK",
+      "actual_paid": null,
+      "sources": [
+        {
+          "document_id": "grad-bjelovar-registar-sklopljenih-ugovora-2018.pdf",
+          "page": 6,
+          "url": "https://www.bjelovar.hr/wp-content/uploads/2019/01/grad-bjelovar-registar-sklopljenih-ugovora-2018.pdf",
+          "available_from": "2019-01-03"
+        }
+      ]
+    }
+  ]
+}
