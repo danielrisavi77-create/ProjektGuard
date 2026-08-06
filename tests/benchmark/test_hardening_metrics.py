@@ -38,7 +38,7 @@ def test_pre_cutoff_temporal_integrity_rejects_future_source():
     case = BenchmarkCase(
         test_id="T-pre", case_id="T", rule_id="R04", fixture="unused.json",
         expected=BenchmarkExpectation(verdict=Verdict.VERIFIED), source_url="synthetic",
-        ground_truth="temporal fixture", mode=BenchmarkMode.PRE_CUTOFF,
+        source_observed_at=date(2026, 1, 1), ground_truth="temporal fixture", mode=BenchmarkMode.PRE_CUTOFF,
     )
     context = AuditContext(
         project_id="P", as_of=date(2026, 5, 1),
@@ -62,7 +62,7 @@ def test_pre_cutoff_temporal_integrity_rejects_future_contract_execution_observa
     case = BenchmarkCase(
         test_id="T-pre", case_id="T", rule_id="R51", fixture="unused.json",
         expected=BenchmarkExpectation(verdict=Verdict.UNKNOWN), source_url="synthetic",
-        ground_truth="temporal fixture", mode=BenchmarkMode.PRE_CUTOFF,
+        source_observed_at=date(2026, 1, 1), ground_truth="temporal fixture", mode=BenchmarkMode.PRE_CUTOFF,
     )
     context = AuditContext(
         project_id="P", as_of=date(2026, 5, 1),
@@ -72,5 +72,87 @@ def test_pre_cutoff_temporal_integrity_rejects_future_contract_execution_observa
             contract_id="C1", amount=Decimal("100"), currency="EUR", actual_paid=Decimal("120"),
             actual_paid_observed_at=date(2026, 6, 1),
         )],
+    )
+    assert _temporal_integrity(case, context) is False
+
+
+def test_pre_cutoff_requires_benchmark_source_observation_date():
+    from datetime import date
+    from projektguard.benchmark.evaluator import _temporal_integrity
+    from projektguard.benchmark.models import BenchmarkCase, BenchmarkExpectation, BenchmarkMode
+    from projektguard.domain.models import AuditContext, EligibilityPeriod, ProjectFinancials
+
+    case = BenchmarkCase(
+        test_id="T-pre-source", case_id="T", rule_id="R51", fixture="unused.json",
+        expected=BenchmarkExpectation(verdict=Verdict.UNKNOWN), source_url="https://example.test/input",
+        ground_truth="later outcome", mode=BenchmarkMode.PRE_CUTOFF,
+    )
+    context = AuditContext(
+        project_id="P", as_of=date(2020, 6, 30),
+        eligibility=EligibilityPeriod(start=date(2018, 1, 1), end=date(2020, 12, 31)),
+        financials=ProjectFinancials(currency="HRK"),
+    )
+    assert _temporal_integrity(case, context) is False
+
+
+def test_pre_cutoff_rejects_benchmark_source_published_after_cutoff():
+    from datetime import date
+    from projektguard.benchmark.evaluator import _temporal_integrity
+    from projektguard.benchmark.models import BenchmarkCase, BenchmarkExpectation, BenchmarkMode
+    from projektguard.domain.models import AuditContext, EligibilityPeriod, ProjectFinancials
+
+    case = BenchmarkCase(
+        test_id="T-pre-source", case_id="T", rule_id="R51", fixture="unused.json",
+        expected=BenchmarkExpectation(verdict=Verdict.UNKNOWN), source_url="https://example.test/input",
+        source_observed_at=date(2020, 7, 1), ground_truth="later outcome", mode=BenchmarkMode.PRE_CUTOFF,
+    )
+    context = AuditContext(
+        project_id="P", as_of=date(2020, 6, 30),
+        eligibility=EligibilityPeriod(start=date(2018, 1, 1), end=date(2020, 12, 31)),
+        financials=ProjectFinancials(currency="HRK"),
+    )
+    assert _temporal_integrity(case, context) is False
+
+
+def test_pre_cutoff_requires_source_ref_observation_dates():
+    from datetime import date
+    from decimal import Decimal
+    from projektguard.benchmark.evaluator import _temporal_integrity
+    from projektguard.benchmark.models import BenchmarkCase, BenchmarkExpectation, BenchmarkMode
+    from projektguard.domain.models import AuditContext, Contract, EligibilityPeriod, ProjectFinancials, SourceRef
+
+    case = BenchmarkCase(
+        test_id="T-pre-source", case_id="T", rule_id="R51", fixture="unused.json",
+        expected=BenchmarkExpectation(verdict=Verdict.UNKNOWN), source_url="https://example.test/input",
+        source_observed_at=date(2020, 1, 1), ground_truth="later outcome", mode=BenchmarkMode.PRE_CUTOFF,
+    )
+    context = AuditContext(
+        project_id="P", as_of=date(2020, 6, 30),
+        eligibility=EligibilityPeriod(start=date(2018, 1, 1), end=date(2020, 12, 31)),
+        financials=ProjectFinancials(currency="HRK"),
+        contracts=[Contract(
+            contract_id="C", amount=Decimal("100"), currency="HRK",
+            sources=[SourceRef(document_id="contract-register.pdf", url="https://example.test/contract")],
+        )],
+    )
+    assert _temporal_integrity(case, context) is False
+
+
+def test_pre_cutoff_ground_truth_must_be_observed_after_cutoff():
+    from datetime import date
+    from projektguard.benchmark.evaluator import _temporal_integrity
+    from projektguard.benchmark.models import BenchmarkCase, BenchmarkExpectation, BenchmarkMode
+    from projektguard.domain.models import AuditContext, EligibilityPeriod, ProjectFinancials
+
+    case = BenchmarkCase(
+        test_id="T-pre-ground", case_id="T", rule_id="R51", fixture="unused.json",
+        expected=BenchmarkExpectation(verdict=Verdict.UNKNOWN), source_url="https://example.test/input",
+        source_observed_at=date(2020, 1, 1), ground_truth="later outcome",
+        ground_truth_observed_at=date(2020, 6, 1), mode=BenchmarkMode.PRE_CUTOFF,
+    )
+    context = AuditContext(
+        project_id="P", as_of=date(2020, 6, 30),
+        eligibility=EligibilityPeriod(start=date(2018, 1, 1), end=date(2020, 12, 31)),
+        financials=ProjectFinancials(currency="HRK"),
     )
     assert _temporal_integrity(case, context) is False
