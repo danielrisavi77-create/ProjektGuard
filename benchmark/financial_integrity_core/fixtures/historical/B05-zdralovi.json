@@ -1,0 +1,31 @@
+{
+  "project_id": "B05-ZDRALOVI",
+  "as_of": "2021-11-26",
+  "eligibility": {
+    "start": "2019-01-01",
+    "end": "2020-12-31"
+  },
+  "financials": {
+    "total_project_cost": "1000",
+    "eligible_cost": "900",
+    "grant_amount": "500",
+    "currency": "EUR"
+  },
+  "contracts": [
+    {
+      "contract_id": "SUPERVISION",
+      "amount": "55000",
+      "currency": "HRK",
+      "actual_paid": "55004",
+      "sources": [
+        {
+          "document_id": "contract-register.pdf",
+          "page": 1,
+          "url": "https://www.bjelovar.hr/wp-content/uploads/2021/11/Registar-ugovora-1.1.2018.-26.11.2021..pdf",
+          "available_from": "2021-11-26"
+        }
+      ],
+      "actual_paid_observed_at": "2021-11-26"
+    }
+  ]
+}
