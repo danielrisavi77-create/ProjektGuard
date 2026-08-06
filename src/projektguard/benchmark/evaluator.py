@@ -74,7 +74,13 @@ def _temporal_integrity(case: BenchmarkCase, context: AuditContext) -> bool:
         return True
     if case.source_observed_at is None or case.source_observed_at > context.as_of:
         return False
-    if case.ground_truth_observed_at is not None and case.ground_truth_observed_at <= context.as_of:
+    if (
+        case.ground_truth_url is None
+        or case.ground_truth_observed_at is None
+        or case.ground_truth_verdict is None
+    ):
+        return False
+    if case.ground_truth_observed_at <= context.as_of:
         return False
     sources = [
         *[source for cost in context.costs for source in cost.sources],
