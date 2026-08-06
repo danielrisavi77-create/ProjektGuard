@@ -97,7 +97,6 @@ from projektguard.domain.evidence import (
     EvidenceRecord,
     EvidenceType,
     ExecutionRecord,
-    Indicator,
 )
 from projektguard.domain.models import AuditContext, EligibilityPeriod, ProjectFinancials, SourceRef
 
@@ -142,8 +141,6 @@ def test_evidence_record_keeps_traceable_source():
 
 - [ ] **Step 2: Run RED**
 
-Run:
-
 ```bash
 python -m pytest tests/domain/test_evidence_models.py -q
 ```
@@ -157,6 +154,7 @@ Implement enums with at least:
 ```python
 class EvidenceType(str, Enum):
     DELIVERY_NOTE = "delivery_note"
+    EXECUTION_REQUIREMENT = "execution_requirement"
     EXECUTION_REPORT = "execution_report"
     ACCEPTANCE_RECORD = "acceptance_record"
     COMMISSIONING_RECORD = "commissioning_record"
@@ -209,17 +207,75 @@ git commit -m "feat: add normalized evidence domain models"
 - [ ] **Step 1: Write failing temporal/query tests**
 
 ```python
+from datetime import date
+
+from projektguard.domain.evidence import EvidenceRecord, EvidenceType
+from projektguard.domain.evidence_queries import evidence_for, observable_evidence
+from projektguard.domain.models import AuditContext, EligibilityPeriod, ProjectFinancials, SourceRef
+
+
+def base_context(*, evidence):
+    return AuditContext(
+        project_id="P1",
+        as_of=date(2026, 8, 6),
+        eligibility=EligibilityPeriod(start=date(2026, 1, 1), end=date(2026, 12, 31)),
+        financials=ProjectFinancials(currency="EUR"),
+        evidence=evidence,
+    )
+
+
 def test_evidence_after_cutoff_is_not_observable():
-    ...
+    future = EvidenceRecord(
+        evidence_id="EV-future",
+        evidence_type=EvidenceType.DELIVERY_NOTE,
+        observed_at=date(2026, 8, 7),
+        supports_entity_type="cost",
+        supports_entity_id="C1",
+        sources=[SourceRef(document_id="future.pdf")],
+    )
+    context = base_context(evidence=[future])
+    assert observable_evidence(context) == []
+
+
+def test_evidence_without_observation_date_is_not_observable():
+    undated = EvidenceRecord(
+        evidence_id="EV-undated",
+        evidence_type=EvidenceType.DELIVERY_NOTE,
+        observed_at=None,
+        supports_entity_type="cost",
+        supports_entity_id="C1",
+        sources=[SourceRef(document_id="undated.pdf")],
+    )
+    context = base_context(evidence=[undated])
     assert observable_evidence(context) == []
 
 
 def test_evidence_for_filters_by_entity_and_type():
-    ...
+    delivery = EvidenceRecord(
+        evidence_id="EV-delivery",
+        evidence_type=EvidenceType.DELIVERY_NOTE,
+        observed_at=date(2026, 8, 1),
+        supports_entity_type="cost",
+        supports_entity_id="C1",
+        sources=[SourceRef(document_id="delivery.pdf")],
+    )
+    completion = EvidenceRecord(
+        evidence_id="EV-completion",
+        evidence_type=EvidenceType.PROJECT_COMPLETION,
+        observed_at=date(2026, 8, 1),
+        supports_entity_type="project",
+        supports_entity_id="P1",
+        sources=[SourceRef(document_id="completion.pdf")],
+    )
+    context = base_context(evidence=[delivery, completion])
+    result = evidence_for(
+        context,
+        entity_type="cost",
+        entity_id="C1",
+        evidence_types={EvidenceType.DELIVERY_NOTE},
+    )
     assert [row.evidence_id for row in result] == ["EV-delivery"]
 ```
-
-The fixture must contain one evidence record before `as_of`, one after `as_of`, and one for a different entity.
 
 - [ ] **Step 2: Run RED**
 
@@ -233,7 +289,7 @@ Expected: FAIL because query helpers do not exist.
 
 Rules:
 
-```python
+```text
 record.observed_at is None -> not observable for deterministic verification
 record.observed_at <= context.as_of -> observable
 record.observed_at > context.as_of -> unavailable
@@ -274,32 +330,34 @@ git commit -m "feat: add temporal evidence query helpers"
 
 ```python
 RULE_TESTS = {
-    "R35": ["tests/rules/evidence/test_r35_execution_evidence.py"],
-    "R36": ["tests/rules/evidence/test_r36_item_match.py"],
-    "R37": ["tests/rules/evidence/test_r37_quantity_reconciliation.py"],
-    "R38": ["tests/rules/evidence/test_r38_identifier_consistency.py"],
-    "R39": ["tests/rules/evidence/test_r39_acceptance.py"],
-    "R40": ["tests/rules/evidence/test_r40_indicator_traceability.py"],
-    "R41": ["tests/rules/evidence/test_r41_indicator_evidence.py"],
-    "R42": ["tests/rules/evidence/test_r42_indicator_actual.py"],
-    "R43": ["tests/rules/evidence/test_r43_completion_not_achievement.py"],
+    "R35": "tests/rules/evidence/test_r35_execution_evidence.py",
+    "R36": "tests/rules/evidence/test_r36_item_match.py",
+    "R37": "tests/rules/evidence/test_r37_quantity_reconciliation.py",
+    "R38": "tests/rules/evidence/test_r38_identifier_consistency.py",
+    "R39": "tests/rules/evidence/test_r39_acceptance.py",
+    "R40": "tests/rules/evidence/test_r40_indicator_traceability.py",
+    "R41": "tests/rules/evidence/test_r41_indicator_evidence.py",
+    "R42": "tests/rules/evidence/test_r42_indicator_actual.py",
+    "R43": "tests/rules/evidence/test_r43_completion_not_achievement.py",
 }
 ```
 
-After `tests/rules/evidence/test_adversarial_evidence.py` exists, `rule_gate` must also run it with `-k R35`-style selectors or named markers.
+After `tests/rules/evidence/test_adversarial_evidence.py` exists, `rule_gate` must also run it with `-k <RULE_ID>`. Adversarial test names must include the uppercase rule ID, for example `test_R35_second_cost_without_evidence_is_unknown`.
 
 - [ ] **Step 1: Write failing gate tests using monkeypatched subprocess**
 
 Test that `rule_gate`:
 - rejects unknown rule IDs with non-zero exit;
+- runs the focused test path for the requested rule;
 - stops and returns non-zero if focused pytest fails;
-- returns zero only when all configured commands return zero.
+- when the adversarial file exists, runs `pytest tests/rules/evidence/test_adversarial_evidence.py -q -k R35` for R35;
+- returns zero only when every configured command returns zero.
 
-Test that `slice_gate` executes, in order:
+Test that `slice_gate` executes exactly these five stages, in order:
 
 ```text
-1. evidence rule tests
-2. adversarial evidence tests
+1. focused evidence rule files excluding test_adversarial_evidence.py
+2. tests/rules/evidence/test_adversarial_evidence.py
 3. full pytest with coverage >= 90
 4. Financial benchmark
 5. Evidence benchmark
@@ -314,6 +372,8 @@ python -m pytest tests/dev -q
 - [ ] **Step 3: Implement subprocess runner**
 
 Use `subprocess.run(command, check=False)` and propagate the first non-zero return code. Print the stage name before execution so CI logs reveal the exact failing gate.
+
+Before Task 11 creates the adversarial file, `rule_gate` may skip the adversarial command only when `Path("tests/rules/evidence/test_adversarial_evidence.py").exists()` is false. After the file exists, a failure in that command must block the gate.
 
 - [ ] **Step 4: Run GREEN**
 
@@ -341,13 +401,14 @@ git commit -m "feat: automate Evidence Integrity TDD gates"
 **Interfaces:**
 - Registers `R35` and `R39` in the existing rule registry.
 - Findings remain entity-scoped with `subject_type`/`subject_id`.
+- R35 evidence requirement is represented by observable `EvidenceRecord` entries of type `EXECUTION_REQUIREMENT` linked to the cost/contract. The requirement record may contain `facts["required_types"]` as a list of evidence-type string values.
 
 - [ ] **Step 1: RED for R35**
 
 Required tests:
-- delivery/execution evidence exists before cutoff with source -> `VERIFIED`;
-- requirement known but evidence absent -> `UNKNOWN`;
-- evidence exists only after cutoff -> `UNKNOWN`;
+- observable requirement + required delivery/execution evidence with source -> `VERIFIED`;
+- requirement known but required evidence absent -> `UNKNOWN`;
+- required evidence exists only after cutoff -> `UNKNOWN`;
 - two costs where only the second lacks evidence -> findings include an `UNKNOWN` for the second cost.
 
 Run:
@@ -361,8 +422,6 @@ Expected: FAIL because R35 is not registered.
 - [ ] **Step 2: Minimal R35 GREEN**
 
 Do not infer non-delivery from missing evidence. Source-less evidence cannot produce `VERIFIED`.
-
-Run:
 
 ```bash
 python -m projektguard.dev.rule_gate R35
@@ -380,8 +439,6 @@ Required tests:
 - acceptance evidence after cutoff -> `UNKNOWN`.
 
 - [ ] **Step 4: Minimal R39 GREEN**
-
-Run:
 
 ```bash
 python -m projektguard.dev.rule_gate R39
@@ -404,7 +461,9 @@ git commit -m "feat: add evidence presence and acceptance rules"
 - Test: `tests/rules/evidence/test_r37_quantity_reconciliation.py`
 
 **Interfaces:**
-- R36 reads normalized expected item names from `EvidenceRecord.facts["expected_item_name"]` or a linked execution requirement record and compares exact normalized strings only.
+- Expected identity/quantity comes from observable linked `EXECUTION_REQUIREMENT` evidence facts: `expected_item_name`, `expected_quantity`, `unit`.
+- Actual identity/quantity comes from `ExecutionRecord.item_name`, `quantity`, and `unit`.
+- R36 compares exact normalized strings only.
 - R37 compares `Decimal` quantities only when units are identical after `strip().lower()` normalization.
 
 - [ ] **Step 1: RED for R36**
@@ -413,7 +472,7 @@ Tests:
 - exact normalized match (`"Pump A"` vs `" pump a "`) -> `VERIFIED`;
 - deterministic mismatch -> `WARNING`;
 - expected or executed identity missing -> `UNKNOWN`;
-- second execution mismatches while first matches -> overall findings include the second `WARNING`.
+- second execution mismatches while first matches -> findings include the second `WARNING`.
 
 - [ ] **Step 2: Minimal R36 GREEN**
 
@@ -429,8 +488,8 @@ Tests:
 - 10 pcs expected / 10 pcs delivered -> `VERIFIED`;
 - 10 pcs / 8 pcs -> `WARNING`;
 - quantity missing -> `UNKNOWN`;
-- `pcs` vs `kg` -> `EXPERT_REVIEW` or `UNKNOWN`; choose `EXPERT_REVIEW` when both quantities exist but units conflict;
-- future evidence cannot reconcile a current quantity.
+- `pcs` vs `kg` with both quantities known -> `EXPERT_REVIEW`;
+- future requirement/evidence cannot reconcile a current quantity.
 
 - [ ] **Step 4: Minimal R37 GREEN**
 
@@ -458,7 +517,7 @@ git commit -m "feat: add item and quantity evidence reconciliation"
 - [ ] **Step 1: RED**
 
 Tests:
-- expected serial/model exactly matches execution -> `VERIFIED`;
+- expected serial/model from `EXECUTION_REQUIREMENT` exactly matches execution -> `VERIFIED`;
 - model mismatch -> `WARNING`;
 - serial mismatch -> `WARNING`;
 - required serial missing -> `UNKNOWN`;
@@ -495,11 +554,11 @@ Tests:
 - baseline missing -> `UNKNOWN`;
 - target missing -> `UNKNOWN`;
 - source ID missing/unresolvable -> `UNKNOWN`;
-- two observable approved evidence records provide contradictory target values -> `EXPERT_REVIEW`.
+- two observable evidence records referenced by `Indicator.source_ids` provide contradictory `baseline` or `target` facts -> `EXPERT_REVIEW`.
 
 - [ ] **Step 2: GREEN**
 
-R40 must never choose between contradictory approved indicator values. It must return `EXPERT_REVIEW` with all conflicting facts/sources.
+R40 must never choose between contradictory sourced indicator values. It must return `EXPERT_REVIEW` with all conflicting facts/sources.
 
 ```bash
 python -m projektguard.dev.rule_gate R40
@@ -523,7 +582,7 @@ git commit -m "feat: add indicator traceability rule"
 - [ ] **Step 1: RED**
 
 Tests:
-- indicator requires `ENERGY_AUDIT`, observable sourced energy audit exists -> `VERIFIED`;
+- indicator requires `ENERGY_AUDIT`, observable sourced energy audit exists and supports that indicator -> `VERIFIED`;
 - only `PROJECT_COMPLETION` evidence exists -> `UNKNOWN`;
 - required evidence type exists only after cutoff -> `UNKNOWN`;
 - multiple required types where only one is present -> `UNKNOWN`;
@@ -559,7 +618,7 @@ git commit -m "feat: validate prescribed indicator evidence"
 - [ ] **Step 1: RED**
 
 Tests:
-- actual=52.24, prescribed evidence `actual_value=52.24`, direct method -> `VERIFIED`;
+- actual=52.24, prescribed sourced evidence `actual_value=52.24`, direct method -> `VERIFIED`;
 - actual conflicts with sourced direct evidence -> `WARNING`;
 - actual missing -> `UNKNOWN`;
 - required evidence absent -> `UNKNOWN`;
@@ -592,8 +651,8 @@ git commit -m "feat: validate supported indicator actual values"
 
 Tests:
 - observable project completion evidence + indicator actual missing -> `UNKNOWN`;
-- output execution complete + no prescribed indicator evidence -> `UNKNOWN`;
-- actual + required evidence verified -> R43 may return `NOT_APPLICABLE` because the unsafe inference condition does not exist;
+- output execution exists + no prescribed indicator evidence -> `UNKNOWN`;
+- actual + required evidence is present and internally supported -> R43 returns `NOT_APPLICABLE` because the unsafe inference condition does not exist;
 - project completion evidence after cutoff does not affect current snapshot.
 
 - [ ] **Step 2: GREEN**
@@ -618,23 +677,21 @@ git commit -m "feat: prevent completion from verifying outcomes"
 **Files:**
 - Create: `tests/rules/evidence/test_adversarial_evidence.py`
 
-- [ ] **Step 1: Add adversarial regressions with rule markers**
+- [ ] **Step 1: Add adversarial regressions with rule IDs in test names**
 
-Use pytest markers or test names containing `R35`…`R43` so `rule_gate` can select them.
-
-Required adversarial cases:
+Required tests:
 
 ```text
-R35: first cost has evidence, second cost does not
-R35: evidence source exists but observed_at is after cutoff
-R36: first execution matches, second mismatches
-R37: quantities equal but units conflict
-R38: same serial reused on two assets
-R39: acceptance object exists but acceptance evidence ID is unresolved
-R40: baseline/target values exist but source evidence is future-dated
-R41: wrong evidence type must not satisfy requirement
-R42: completion report contains an actual-looking number but is not a prescribed evidence type
-R43: project complete + indicator target present + actual absent must remain UNKNOWN
+test_R35_first_cost_has_evidence_second_cost_is_unknown
+test_R35_future_delivery_evidence_is_not_observable
+test_R36_first_execution_matches_second_execution_warns
+test_R37_equal_numbers_with_conflicting_units_require_expert_review
+test_R38_same_serial_reused_on_two_executions_warns
+test_R39_acceptance_with_unresolved_evidence_id_is_unknown
+test_R40_indicator_sources_after_cutoff_are_unknown
+test_R41_project_completion_does_not_satisfy_energy_audit_requirement
+test_R42_completion_report_number_does_not_substitute_for_prescribed_evidence
+test_R43_project_complete_target_present_actual_absent_is_unknown
 ```
 
 - [ ] **Step 2: Run every rule gate**
@@ -675,8 +732,6 @@ git commit -m "test: harden Evidence Integrity rules adversarially"
 
 - [ ] **Step 1: RED benchmark contract test**
 
-Test expected summary fields:
-
 ```python
 assert summary.total >= 18
 assert summary.pass_rate >= 0.98
@@ -688,8 +743,6 @@ assert summary.high_critical_source_completeness == 1.0
 - [ ] **Step 2: Implement evaluator/CLI**
 
 Do not duplicate Financial benchmark safety logic unnecessarily. Reuse shared verdict/source/temporal helpers where possible, but load Evidence rules separately.
-
-Command:
 
 ```bash
 python -m projektguard.benchmark.evidence_cli \
@@ -720,29 +773,30 @@ git commit -m "test: add Evidence Integrity benchmark"
 - Modify: `.github/workflows/ci.yml`
 - Test: `tests/dev/test_slice_gate.py`
 
-- [ ] **Step 1: Lock exact full gate command order**
+- [ ] **Step 1: Lock exact five-stage full gate**
 
 `python -m projektguard.dev.slice_gate evidence-integrity` must execute:
 
 ```text
-1. python -m pytest tests/rules/evidence -q
-2. python -m pytest --cov=projektguard --cov-report=term --cov-fail-under=90
-3. projektguard-benchmark --manifest benchmark/financial_integrity_core/manifest.json --json-output benchmark-summary.json
-4. python -m projektguard.benchmark.evidence_cli --manifest benchmark/evidence_integrity/manifest.json --json-output evidence-benchmark-summary.json
+1. python -m pytest tests/rules/evidence --ignore=tests/rules/evidence/test_adversarial_evidence.py -q
+2. python -m pytest tests/rules/evidence/test_adversarial_evidence.py -q
+3. python -m pytest --cov=projektguard --cov-report=term --cov-fail-under=90
+4. projektguard-benchmark --manifest benchmark/financial_integrity_core/manifest.json --json-output benchmark-summary.json
+5. python -m projektguard.benchmark.evidence_cli --manifest benchmark/evidence_integrity/manifest.json --json-output evidence-benchmark-summary.json
 ```
 
 Stop immediately on first failure.
 
 - [ ] **Step 2: Update CI**
 
-Replace separate duplicated commands with:
+Replace the current standalone test/Financial benchmark steps with:
 
 ```yaml
 - name: Evidence Integrity slice gate
   run: python -m projektguard.dev.slice_gate evidence-integrity
 ```
 
-Do not remove the semantic guarantees of the Financial benchmark; the slice gate must call it internally.
+The slice gate itself retains the full pytest coverage and Financial benchmark, so no safety gate is removed.
 
 - [ ] **Step 3: Run local full gate**
 
@@ -817,20 +871,20 @@ Do not merge immediately. Perform the same production-style code audit used on P
 
 ---
 
-## Automated Daily Development Loop for This Slice
+## Automated Development Loop for Every Rule
 
-For every rule, execution follows exactly this sequence:
+For a concrete rule such as R35, execution is:
 
 ```text
-1. Add focused failing test.
-2. Run focused test and confirm intended RED failure.
-3. Implement minimal rule behavior.
-4. Run `python -m projektguard.dev.rule_gate RXX`.
-5. Add/update adversarial regression.
-6. Re-run `rule_gate RXX`.
+1. Add the R35 focused failing test.
+2. Run the R35 focused test and confirm intended RED failure.
+3. Implement minimal R35 behavior.
+4. Run `python -m projektguard.dev.rule_gate R35`.
+5. Add/update the R35 adversarial regression.
+6. Re-run `python -m projektguard.dev.rule_gate R35`.
 7. Run `python -m projektguard.dev.slice_gate evidence-integrity`.
 8. Commit only when all gates are green.
-9. Continue to next rule.
+9. Repeat the same sequence for the next concrete rule ID.
 ```
 
 If any gate fails, the loop returns to the failing stage. Never weaken an expectation solely to make a test pass; first determine whether the fixture or implementation violates the written rule contract.
@@ -850,5 +904,5 @@ Slice 2 is complete only when all of the following are true:
 - Explicitly source-required HIGH/CRITICAL findings are 100% source-complete.
 - Future-dated evidence does not enter current audit snapshots.
 - No LLM/OCR component participates in deterministic verdict generation.
-- GitHub Actions runs the same full slice gate used locally.
+- GitHub Actions runs the same five-stage full slice gate used locally.
 - Draft PR receives a production-style code audit before merge.
