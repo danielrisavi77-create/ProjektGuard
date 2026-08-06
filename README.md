@@ -13,6 +13,7 @@ The first implementation slice is a deterministic **Financial Integrity Core** e
 - Financial decisions use `decimal.Decimal`, not binary floating-point arithmetic.
 - Currency mismatches are never silently reconciled.
 - Audit cutoffs exclude future-dated costs/payments and future-observed execution totals.
+- Strict pre-cutoff cases require dated proof that each benchmark/source input was observable by the cutoff.
 - Materiality is explicit configuration, not a hidden magic number.
 - Benchmark tests drive product behavior.
 
@@ -24,7 +25,7 @@ Implemented rules:
 
 The v0.1.1 hardening pass adds per-entity evaluation, cumulative budget-line checks, currency guards, temporal cutoff behavior, supplier-aware duplicate identity, tri-state baseline-change state, and stricter benchmark safety metrics.
 
-The committed benchmark contains 30 acceptance cases. Four public historical cases (Stare Plavnice, V. OŠ Bjelovar, PŠ Ždralovi, and Tehnoguma) are explicitly classified as **retrospective**. They are useful historical regression signals but are **not** counted as blind pre-cutoff prediction cases.
+The committed benchmark contains 31 acceptance cases. Four public historical cases (Stare Plavnice, V. OŠ Bjelovar, PŠ Ždralovi, and Tehnoguma) are explicitly classified as **retrospective**. One additional Stare Plavnice case is a strict **pre-cutoff** temporal benchmark.
 
 ## Windows local quick start
 
@@ -57,11 +58,12 @@ Acceptance thresholds:
 - explicitly source-required findings = 100% source-complete
 - pre-cutoff fixture temporal integrity = 100%
 
-The benchmark summary also reports the number of retrospective and genuine pre-cutoff historical cases. A zero count of pre-cutoff historical cases must not be presented as predictive validation.
+The benchmark summary reports both retrospective and genuine pre-cutoff historical case counts. A pre-cutoff case is only valid when its source observation dates prove that the engine's inputs existed by the stated audit cutoff.
 
 See `docs/benchmark-financial-integrity-core.md` for rule-to-benchmark traceability.
 
-## Reference artifacts
+## Historical validation status
 
-- `docs/ProjektGuard_Benchmark_v1.xlsx` — human-readable rule/case matrix.
-- `docs/Financial_Integrity_Core_Implementation_Plan.md` — TDD plan for the first engine slice.
+The first strict public pre-cutoff case uses Stare Plavnice with a cutoff of 10 December 2019. The original contract amount was already publicly observable, while the final execution total was not. ProjektGuard therefore returns `UNKNOWN` for R51 rather than a false `VERIFIED`; a later public register resolves the ground-truth state to `WARNING` because final execution exceeded the original contract.
+
+This validates **temporal isolation and calibrated uncertainty**. It does not yet prove full-document controller-finding recall, because the private invoice/payment evidence and the full contents of later supplement requests are not public.
