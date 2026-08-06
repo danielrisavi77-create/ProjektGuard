@@ -72,6 +72,10 @@ def _decisive_finding(findings: list[Finding]) -> Finding:
 def _temporal_integrity(case: BenchmarkCase, context: AuditContext) -> bool:
     if case.mode != BenchmarkMode.PRE_CUTOFF:
         return True
+    if case.source_observed_at is None or case.source_observed_at > context.as_of:
+        return False
+    if case.ground_truth_observed_at is not None and case.ground_truth_observed_at <= context.as_of:
+        return False
     sources = [
         *[source for cost in context.costs for source in cost.sources],
         *[source for contract in context.contracts for source in contract.sources],
@@ -80,7 +84,7 @@ def _temporal_integrity(case: BenchmarkCase, context: AuditContext) -> bool:
         *[budget.approval_source for budget in context.budget_versions if budget.approval_source],
         *([context.baseline_approval_source] if context.baseline_approval_source else []),
     ]
-    if any(source.available_from is not None and source.available_from > context.as_of for source in sources):
+    if any(source.available_from is None or source.available_from > context.as_of for source in sources):
         return False
     if any(
         contract.actual_invoiced_observed_at is not None and contract.actual_invoiced_observed_at > context.as_of
