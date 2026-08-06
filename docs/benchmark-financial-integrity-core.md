@@ -12,6 +12,8 @@ The benchmark distinguishes three modes:
 
 A retrospective correction or supplement is a **ground-truth signal**, not proof that ProjektGuard predicted the controller's exact reason. Only `pre_cutoff` cases may be used for predictive/blind-validation claims.
 
+For `pre_cutoff` cases, the manifest must record `source_observed_at`, every normalized `SourceRef` used by the rule must have `available_from`, and any later ground-truth artifact must have `ground_truth_observed_at > as_of`. A URL without an observation date is not sufficient proof of historical availability.
+
 ## Safety behavior added in v0.1.1
 
 - Rules that apply to costs/contracts evaluate every relevant entity rather than item zero.
@@ -38,7 +40,7 @@ A retrospective correction or supplement is a **ground-truth signal**, not proof
 | R30 | Payment evidence | missing + linked bank evidence + adversarial per-claimed-cost coverage | public project files generally lack full bank evidence |
 | R32 | Invoice/payment reconciliation | exact + material mismatch + adversarial multi-cost/currency/cutoff tests | n/a |
 | R44 | Duplicate claim | repeated cost-id + duplicate invoice identity across different cost IDs | n/a |
-| R51 | Paid amount vs contract | synthetic within + B03 retrospective + adversarial multi-contract/cutoff | Stare Plavnice |
+| R51 | Paid amount vs contract | synthetic within + B03 retrospective + B07 strict pre-cutoff + adversarial multi-contract/cutoff | Stare Plavnice |
 | R53 | Execution vs project baseline | synthetic within + over + cross-currency expert-review test | B03-style historical logic |
 | R54 | Baseline change approval | synthetic approved + B04 retrospective `UNKNOWN` + tri-state regression | V. OŠ Bjelovar |
 | R61 | Materiality tolerance | B05 retrospective four-HRK delta + synthetic material difference + multi-contract regression | PŠ Ždralovi |
@@ -61,6 +63,14 @@ The four-HRK supervision delta comes from a later public register and is used to
 ### B06 — Tehnoguma — `retrospective`
 
 The completed public project baseline verifies only the distinction between total cost, eligible cost and grant amount. It does not infer invoice-level eligibility.
+
+### B07 — Stare Plavnice execution state — `pre_cutoff`
+
+Cutoff: **10 December 2019**. The City of Bjelovar's 2018 contract register was publicly listed on **3 January 2019** and already contained contract `4-06-Ra/18` for **5,112,109.13 HRK**. At the cutoff, the public snapshot did not contain a final `actual_paid` value, so `R51` must return `UNKNOWN`, not `VERIFIED`.
+
+A later public contract register (26 November 2021) records final execution of **5,259,796.34 HRK**, above the original contract value, which resolves the later ground-truth state of `R51` to `WARNING`. Separately, public City acts show two supplement requests on **1 July 2020** and **23 July 2020**. The benchmark does **not** claim those supplement requests were caused by the R51 difference.
+
+This is the first strict public `pre_cutoff` case. It validates temporal isolation and calibrated uncertainty; it is not yet a proof of full-document controller-finding recall because the private invoice/payment package was not public.
 
 ## Acceptance metrics
 
