@@ -1,0 +1,15 @@
+{
+  "project_id": "B04-V-OS",
+  "as_of": "2021-06-30",
+  "eligibility": {
+    "start": "2019-04-19",
+    "end": "2021-12-31"
+  },
+  "financials": {
+    "total_project_cost": "1000",
+    "eligible_cost": "900",
+    "grant_amount": "500",
+    "currency": "EUR"
+  },
+  "baseline_changed": true
+}

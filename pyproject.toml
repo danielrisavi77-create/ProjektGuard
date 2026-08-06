@@ -10,6 +10,9 @@ dependencies = [
   "pydantic>=2.8,<3",
 ]
 
+[project.scripts]
+projektguard-benchmark = "projektguard.benchmark.cli:main"
+
 [project.optional-dependencies]
 dev = [
   "pytest>=8,<9",

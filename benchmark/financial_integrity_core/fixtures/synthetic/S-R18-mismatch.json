@@ -1,0 +1,41 @@
+{
+  "project_id": "SYN",
+  "as_of": "2026-05-01",
+  "eligibility": {
+    "start": "2026-01-01",
+    "end": "2026-12-31"
+  },
+  "financials": {
+    "total_project_cost": "1000",
+    "eligible_cost": "900",
+    "grant_amount": "500",
+    "currency": "EUR"
+  },
+  "procurements": [
+    {
+      "procurement_id": "PR1",
+      "award_amount": "79500",
+      "currency": "EUR",
+      "sources": [
+        {
+          "document_id": "award.pdf",
+          "page": 4
+        }
+      ]
+    }
+  ],
+  "contracts": [
+    {
+      "contract_id": "CON1",
+      "procurement_id": "PR1",
+      "amount": "82350",
+      "currency": "EUR",
+      "sources": [
+        {
+          "document_id": "contract.pdf",
+          "page": 2
+        }
+      ]
+    }
+  ]
+}

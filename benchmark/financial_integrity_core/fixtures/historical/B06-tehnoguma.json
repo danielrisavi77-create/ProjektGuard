@@ -1,0 +1,14 @@
+{
+  "project_id": "B06-TEHNOGUMA",
+  "as_of": "2026-03-01",
+  "eligibility": {
+    "start": "2023-03-01",
+    "end": "2026-03-01"
+  },
+  "financials": {
+    "total_project_cost": "834202.67",
+    "eligible_cost": "343128.28",
+    "grant_amount": "207761.62",
+    "currency": "EUR"
+  }
+}

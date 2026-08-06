@@ -50,3 +50,25 @@ def test_r09_warns_when_cost_exceeds_current_budget_line():
 def test_r11_verifies_current_budget_version_is_available_and_approved():
     findings = run_rule("R11", _context(), TolerancePolicy())
     assert findings[0].verdict == Verdict.VERIFIED
+
+
+def test_r04_unknown_when_no_cost_is_available():
+    ctx = _context()
+    ctx.costs = []
+    finding = run_rule("R04", ctx, TolerancePolicy())[0]
+    assert finding.verdict == Verdict.UNKNOWN
+    assert finding.reason_code == "COST_DATE_UNKNOWN"
+
+
+def test_r09_unknown_when_budget_line_mapping_is_missing():
+    finding = run_rule("R09", _context(line_id="MISSING"), TolerancePolicy())[0]
+    assert finding.verdict == Verdict.UNKNOWN
+    assert finding.reason_code == "BUDGET_LINE_LIMIT_UNKNOWN"
+
+
+def test_r11_warns_when_active_budget_is_not_approved():
+    ctx = _context()
+    ctx.budget_versions[0].approved = False
+    finding = run_rule("R11", ctx, TolerancePolicy())[0]
+    assert finding.verdict == Verdict.WARNING
+    assert finding.reason_code == "CURRENT_BUDGET_NOT_APPROVED"

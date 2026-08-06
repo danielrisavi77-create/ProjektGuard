@@ -47,3 +47,35 @@ def test_r51_warns_when_actual_paid_exceeds_contract():
     finding = run_rule("R51", ctx, TolerancePolicy())[0]
     assert finding.verdict == Verdict.WARNING
     assert finding.reason_code == "ACTUAL_PAID_EXCEEDS_CONTRACT"
+
+
+def test_r18_unknown_when_contract_is_missing():
+    ctx = _context()
+    ctx.contracts = []
+    finding = run_rule("R18", ctx, TolerancePolicy())[0]
+    assert finding.verdict == Verdict.UNKNOWN
+    assert finding.reason_code == "PROCUREMENT_OR_CONTRACT_MISSING"
+
+
+def test_r22_unknown_when_actual_invoicing_is_missing():
+    ctx = _context()
+    ctx.contracts[0].actual_invoiced = None
+    finding = run_rule("R22", ctx, TolerancePolicy())[0]
+    assert finding.verdict == Verdict.UNKNOWN
+    assert finding.reason_code == "INVOICING_DATA_UNKNOWN"
+
+
+def test_r51_unknown_when_actual_payment_total_is_missing():
+    ctx = _context()
+    ctx.contracts[0].actual_paid = None
+    finding = run_rule("R51", ctx, TolerancePolicy())[0]
+    assert finding.verdict == Verdict.UNKNOWN
+    assert finding.reason_code == "ACTUAL_PAYMENT_TOTAL_UNKNOWN"
+
+
+def test_r61_unknown_when_materiality_comparison_is_unavailable():
+    ctx = _context()
+    ctx.contracts[0].actual_paid = None
+    finding = run_rule("R61", ctx, TolerancePolicy())[0]
+    assert finding.verdict == Verdict.UNKNOWN
+    assert finding.reason_code == "COMPARISON_NOT_AVAILABLE"

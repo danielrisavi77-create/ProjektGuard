@@ -1,0 +1,14 @@
+{
+  "project_id": "SYN",
+  "as_of": "2026-05-01",
+  "eligibility": {
+    "start": "2026-01-01",
+    "end": "2026-12-31"
+  },
+  "financials": {
+    "total_project_cost": "100",
+    "eligible_cost": "120",
+    "grant_amount": "80",
+    "currency": "EUR"
+  }
+}

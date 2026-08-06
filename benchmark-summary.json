@@ -1,0 +1,10 @@
+{
+  "total": 30,
+  "passed": 30,
+  "pass_rate": 1.0,
+  "critical_false_positives": 0,
+  "unknown_expected": 4,
+  "unknown_correct": 4,
+  "unknown_discipline": 1.0,
+  "high_critical_source_completeness": 1.0
+}

@@ -1,0 +1,36 @@
+{
+  "project_id": "SYN",
+  "as_of": "2026-05-01",
+  "eligibility": {
+    "start": "2026-01-01",
+    "end": "2026-12-31"
+  },
+  "financials": {
+    "total_project_cost": "1000",
+    "eligible_cost": "900",
+    "grant_amount": "500",
+    "currency": "EUR"
+  },
+  "costs": [
+    {
+      "cost_id": "C1",
+      "invoice_number": "INV-1",
+      "invoice_date": "2026-05-01",
+      "amount": "90",
+      "currency": "EUR",
+      "budget_line_id": "BL1",
+      "document_hash": "h1",
+      "sources": []
+    },
+    {
+      "cost_id": "C2",
+      "invoice_number": "INV-1",
+      "invoice_date": "2026-05-01",
+      "amount": "90",
+      "currency": "EUR",
+      "budget_line_id": "BL1",
+      "document_hash": "h2",
+      "sources": []
+    }
+  ]
+}

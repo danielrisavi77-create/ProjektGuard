@@ -1,0 +1,31 @@
+{
+  "project_id": "SYN",
+  "as_of": "2026-05-01",
+  "eligibility": {
+    "start": "2026-01-01",
+    "end": "2026-12-31"
+  },
+  "financials": {
+    "total_project_cost": "1000",
+    "eligible_cost": "900",
+    "grant_amount": "500",
+    "currency": "EUR"
+  },
+  "payments": [
+    {
+      "payment_id": "PAY1",
+      "payment_date": "2026-05-10",
+      "amount": "100",
+      "currency": "EUR",
+      "related_cost_ids": [
+        "C1"
+      ],
+      "evidence_sources": [
+        {
+          "document_id": "bank.pdf",
+          "page": 1
+        }
+      ]
+    }
+  ]
+}
