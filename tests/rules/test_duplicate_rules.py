@@ -24,7 +24,7 @@ def _base(costs, claimed=None):
 def _cost(cost_id, invoice_number, document_hash):
     return Cost(
         cost_id=cost_id, invoice_number=invoice_number, invoice_date=date(2026, 3, 1),
-        amount=Decimal("100"), currency="EUR", budget_line_id="BL1", document_hash=document_hash
+        amount=Decimal("100"), currency="EUR", budget_line_id="BL1", supplier_id="SUP-1", document_hash=document_hash
     )
 
 

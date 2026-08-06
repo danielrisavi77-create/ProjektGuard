@@ -1,6 +1,6 @@
 {
   "project_id": "B03-STARE-PLAVNICE",
-  "as_of": "2020-06-30",
+  "as_of": "2023-05-29",
   "eligibility": {
     "start": "2018-01-01",
     "end": "2020-12-31"
@@ -21,9 +21,11 @@
         {
           "document_id": "contract-register.pdf",
           "page": 1,
-          "url": "https://www.bjelovar.hr/wp-content/uploads/2023/05/Registar-sklopljenih-ugovora-do-29.05.2023.-godine.pdf"
+          "url": "https://www.bjelovar.hr/wp-content/uploads/2023/05/Registar-sklopljenih-ugovora-do-29.05.2023.-godine.pdf",
+          "available_from": "2023-05-29"
         }
-      ]
+      ],
+      "actual_paid_observed_at": "2023-05-29"
     }
   ]
 }

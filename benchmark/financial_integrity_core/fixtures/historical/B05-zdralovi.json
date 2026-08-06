@@ -1,6 +1,6 @@
 {
   "project_id": "B05-ZDRALOVI",
-  "as_of": "2020-01-31",
+  "as_of": "2021-11-26",
   "eligibility": {
     "start": "2019-01-01",
     "end": "2020-12-31"
@@ -21,9 +21,11 @@
         {
           "document_id": "contract-register.pdf",
           "page": 1,
-          "url": "https://www.bjelovar.hr/wp-content/uploads/2021/11/Registar-ugovora-1.1.2018.-26.11.2021..pdf"
+          "url": "https://www.bjelovar.hr/wp-content/uploads/2021/11/Registar-ugovora-1.1.2018.-26.11.2021..pdf",
+          "available_from": "2021-11-26"
         }
-      ]
+      ],
+      "actual_paid_observed_at": "2021-11-26"
     }
   ]
 }

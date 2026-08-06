@@ -31,7 +31,9 @@ def _context(cost_date=date(2026, 5, 1), cost_amount=Decimal("90"), line_id="BL1
 
 
 def test_r04_warns_when_cost_date_is_outside_eligibility():
-    findings = run_rule("R04", _context(cost_date=date(2027, 1, 1)), TolerancePolicy())
+    ctx = _context(cost_date=date(2027, 1, 1))
+    ctx.as_of = date(2027, 1, 1)
+    findings = run_rule("R04", ctx, TolerancePolicy())
     assert findings[0].verdict == Verdict.WARNING
     assert findings[0].reason_code == "COST_OUTSIDE_ELIGIBILITY_PERIOD"
 

@@ -33,7 +33,8 @@
     "expected": {
       "verdict": "VERIFIED",
       "severity": "HIGH",
-      "reason_code": "BUDGET_LINE_FOUND"
+      "reason_code": "BUDGET_LINE_FOUND",
+      "requires_source": true
     },
     "source_url": "synthetic",
     "ground_truth": "Deterministic synthetic fixture"
@@ -59,7 +60,8 @@
     "expected": {
       "verdict": "VERIFIED",
       "severity": "HIGH",
-      "reason_code": "WITHIN_BUDGET_LINE"
+      "reason_code": "WITHIN_BUDGET_LINE",
+      "requires_source": true
     },
     "source_url": "synthetic",
     "ground_truth": "Deterministic synthetic fixture"
@@ -72,7 +74,8 @@
     "expected": {
       "verdict": "WARNING",
       "severity": "HIGH",
-      "reason_code": "BUDGET_LINE_EXCEEDED"
+      "reason_code": "BUDGET_LINE_EXCEEDED",
+      "requires_source": true
     },
     "source_url": "synthetic",
     "ground_truth": "Deterministic synthetic fixture"
@@ -85,7 +88,8 @@
     "expected": {
       "verdict": "VERIFIED",
       "severity": "HIGH",
-      "reason_code": "CURRENT_BUDGET_VERSION_CONFIRMED"
+      "reason_code": "CURRENT_BUDGET_VERSION_CONFIRMED",
+      "requires_source": true
     },
     "source_url": "synthetic",
     "ground_truth": "Deterministic synthetic fixture"
@@ -111,7 +115,8 @@
     "expected": {
       "verdict": "VERIFIED",
       "severity": "HIGH",
-      "reason_code": "AWARD_CONTRACT_MATCH"
+      "reason_code": "AWARD_CONTRACT_MATCH",
+      "requires_source": true
     },
     "source_url": "synthetic",
     "ground_truth": "Deterministic synthetic fixture"
@@ -124,7 +129,8 @@
     "expected": {
       "verdict": "WARNING",
       "severity": "HIGH",
-      "reason_code": "CONTRACT_AWARD_AMOUNT_MISMATCH"
+      "reason_code": "CONTRACT_AWARD_AMOUNT_MISMATCH",
+      "requires_source": true
     },
     "source_url": "synthetic",
     "ground_truth": "Deterministic synthetic fixture"
@@ -163,7 +169,7 @@
     "expected": {
       "verdict": "VERIFIED",
       "severity": "CRITICAL",
-      "reason_code": "INVOICE_NUMBERS_UNIQUE"
+      "reason_code": "INVOICE_IDENTITIES_UNIQUE"
     },
     "source_url": "synthetic",
     "ground_truth": "Deterministic synthetic fixture"
@@ -176,7 +182,7 @@
     "expected": {
       "verdict": "WARNING",
       "severity": "CRITICAL",
-      "reason_code": "DUPLICATE_INVOICE_NUMBER"
+      "reason_code": "DUPLICATE_INVOICE_IDENTITY"
     },
     "source_url": "synthetic",
     "ground_truth": "Deterministic synthetic fixture"
@@ -189,7 +195,8 @@
     "expected": {
       "verdict": "VERIFIED",
       "severity": "HIGH",
-      "reason_code": "PAYMENT_EVIDENCE_PRESENT"
+      "reason_code": "PAYMENT_EVIDENCE_PRESENT",
+      "requires_source": true
     },
     "source_url": "synthetic",
     "ground_truth": "Deterministic synthetic fixture"
@@ -215,7 +222,8 @@
     "expected": {
       "verdict": "VERIFIED",
       "severity": "HIGH",
-      "reason_code": "PAYMENT_RECONCILED"
+      "reason_code": "PAYMENT_RECONCILED",
+      "requires_source": true
     },
     "source_url": "synthetic",
     "ground_truth": "Deterministic synthetic fixture"
@@ -228,7 +236,8 @@
     "expected": {
       "verdict": "WARNING",
       "severity": "HIGH",
-      "reason_code": "PAYMENT_AMOUNT_MISMATCH"
+      "reason_code": "PAYMENT_AMOUNT_MISMATCH",
+      "requires_source": true
     },
     "source_url": "synthetic",
     "ground_truth": "Deterministic synthetic fixture"
@@ -345,10 +354,12 @@
     "expected": {
       "verdict": "WARNING",
       "severity": "HIGH",
-      "reason_code": "ACTUAL_PAID_EXCEEDS_CONTRACT"
+      "reason_code": "ACTUAL_PAID_EXCEEDS_CONTRACT",
+      "requires_source": true
     },
     "source_url": "https://www.bjelovar.hr/akti-gradonacelnika-srpanj-2020-rujan-2020/",
-    "ground_truth": "Two supplement requests after the pre-cutoff project state"
+    "ground_truth": "Retrospective historical reconstruction; not counted as blind pre-cutoff validation. Two supplement requests after the pre-cutoff project state",
+    "mode": "retrospective"
   },
   {
     "test_id": "B04-R54",
@@ -361,7 +372,8 @@
       "reason_code": "BASELINE_APPROVAL_EVIDENCE_NOT_LINKED"
     },
     "source_url": "https://www.bjelovar.hr/akti-gradonacelnika-srpanj-2021-rujan-2021/",
-    "ground_truth": "Final ZNS correction and later addendum"
+    "ground_truth": "Retrospective historical reconstruction; not counted as blind pre-cutoff validation. Final ZNS correction and later addendum",
+    "mode": "retrospective"
   },
   {
     "test_id": "B05-R61",
@@ -371,10 +383,12 @@
     "expected": {
       "verdict": "VERIFIED",
       "severity": "INFO",
-      "reason_code": "DIFFERENCE_IMMATERIAL"
+      "reason_code": "DIFFERENCE_IMMATERIAL",
+      "requires_source": true
     },
     "source_url": "https://www.bjelovar.hr/akti-gradonacelnika-srpanj-2019-rujan-2019/",
-    "ground_truth": "ZNS correction plus procurement-plan update; four-HRK supervision delta should not create noise"
+    "ground_truth": "Retrospective historical reconstruction; not counted as blind pre-cutoff validation. ZNS correction plus procurement-plan update; four-HRK supervision delta should not create noise",
+    "mode": "retrospective"
   },
   {
     "test_id": "B06-R62",
@@ -387,6 +401,7 @@
       "reason_code": "FINANCIAL_AMOUNT_ORDER_VALID"
     },
     "source_url": "https://tehnoguma-zg.hr/eu-projekti/energetski-i-resursno-ucinkovita-tranzicija-poduzeca-tehnoguma-d-o-o/",
-    "ground_truth": "Completed equipment-focused NPOO project with distinct total, eligible and grant amounts"
+    "ground_truth": "Retrospective historical reconstruction; not counted as blind pre-cutoff validation. Completed equipment-focused NPOO project with distinct total, eligible and grant amounts",
+    "mode": "retrospective"
   }
 ]

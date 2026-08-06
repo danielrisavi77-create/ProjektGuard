@@ -20,7 +20,8 @@
       "currency": "EUR",
       "budget_line_id": "BL1",
       "document_hash": "h1",
-      "sources": []
+      "sources": [],
+      "supplier_id": "SUP-C1"
     },
     {
       "cost_id": "C2",
@@ -30,7 +31,8 @@
       "currency": "EUR",
       "budget_line_id": "BL1",
       "document_hash": "h2",
-      "sources": []
+      "sources": [],
+      "supplier_id": "SUP-C2"
     }
   ]
 }

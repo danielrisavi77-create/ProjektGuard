@@ -10,12 +10,22 @@ from projektguard.domain.money import compare_amounts
 
 def evaluate_r53(context: AuditContext, tolerance: TolerancePolicy) -> list[Finding]:
     baseline = context.financials.current_approved_project_cost
-    paid_values = [contract.actual_paid for contract in context.contracts if contract.actual_paid is not None]
-    if baseline is None or not paid_values:
+    paid_contracts = [(contract, contract.paid_as_of(context.as_of)) for contract in context.contracts]
+    paid_contracts = [(contract, paid) for contract, paid in paid_contracts if paid is not None]
+    if baseline is None or not paid_contracts:
         return [Finding(rule_id="R53", verdict=Verdict.UNKNOWN, severity=Severity.CRITICAL,
                         reason_code="PROJECT_BASELINE_RECONCILIATION_UNKNOWN",
-                        message="Current approved project baseline or execution total is unavailable.")]
-    executed = sum(paid_values, Decimal("0"))
+                        message="Current approved project baseline or execution total is unavailable at the audit cutoff.")]
+    currencies = {contract.currency for contract, _ in paid_contracts}
+    if currencies != {context.financials.currency}:
+        return [Finding(
+            rule_id="R53", verdict=Verdict.EXPERT_REVIEW, severity=Severity.CRITICAL,
+            reason_code="PROJECT_BASELINE_CURRENCY_CONVERSION_REQUIRED",
+            message="Execution and project baseline use different currencies; deterministic aggregation is unsafe without an approved conversion rule.",
+            facts={"project_currency": context.financials.currency, "execution_currencies": sorted(currencies)},
+            requires_expert_review=True,
+        )]
+    executed = sum((paid for _, paid in paid_contracts), Decimal("0"))
     diff = compare_amounts(executed, baseline, tolerance)
     over = executed > baseline and not diff.within_tolerance
     return [Finding(
@@ -23,12 +33,16 @@ def evaluate_r53(context: AuditContext, tolerance: TolerancePolicy) -> list[Find
         reason_code="EXECUTION_EXCEEDS_PROJECT_BASELINE" if over else "EXECUTION_WITHIN_PROJECT_BASELINE",
         message="Known execution exceeds current approved project baseline." if over else "Known execution is within current project baseline.",
         facts={"executed": executed, "current_approved_project_cost": baseline, "difference": diff.absolute},
-        sources=[source for contract in context.contracts for source in contract.sources],
+        sources=[source for contract, _ in paid_contracts for source in contract.sources],
     )]
 
 
 def evaluate_r54(context: AuditContext, tolerance: TolerancePolicy) -> list[Finding]:
-    if not context.baseline_changed:
+    if context.baseline_changed is None:
+        return [Finding(rule_id="R54", verdict=Verdict.UNKNOWN, severity=Severity.HIGH,
+                        reason_code="BASELINE_CHANGE_STATUS_UNKNOWN",
+                        message="It is not known whether the project financial baseline changed.")]
+    if context.baseline_changed is False:
         return [Finding(rule_id="R54", verdict=Verdict.VERIFIED, severity=Severity.HIGH,
                         reason_code="BASELINE_UNCHANGED", message="No project financial baseline change is recorded.")]
     if context.baseline_approval_source is None:

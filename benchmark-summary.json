@@ -3,8 +3,13 @@
   "passed": 30,
   "pass_rate": 1.0,
   "critical_false_positives": 0,
+  "critical_false_negatives": 0,
   "unknown_expected": 4,
   "unknown_correct": 4,
   "unknown_discipline": 1.0,
-  "high_critical_source_completeness": 1.0
+  "source_required_cases": 11,
+  "high_critical_source_completeness": 1.0,
+  "pre_cutoff_cases": 0,
+  "retrospective_cases": 4,
+  "pre_cutoff_temporal_integrity": 1.0
 }

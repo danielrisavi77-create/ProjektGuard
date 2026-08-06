@@ -9,18 +9,22 @@ The first implementation slice is a deterministic **Financial Integrity Core** e
 - Missing evidence is `UNKNOWN`, not failure.
 - Deterministic rules are never decided by an LLM.
 - Interpretative cases escalate to `EXPERT_REVIEW`.
-- HIGH/CRITICAL findings must be source-backed whenever normalized evidence is available.
+- HIGH/CRITICAL source requirements are explicit benchmark expectations, not inferred from unrelated files in a fixture.
 - Financial decisions use `decimal.Decimal`, not binary floating-point arithmetic.
+- Currency mismatches are never silently reconciled.
+- Audit cutoffs exclude future-dated costs/payments and future-observed execution totals.
 - Materiality is explicit configuration, not a hidden magic number.
 - Benchmark tests drive product behavior.
 
-## Financial Integrity Core v0.1
+## Financial Integrity Core v0.1.1
 
 Implemented rules:
 
 `R04, R07, R09, R11, R18, R22, R26, R30, R32, R44, R51, R53, R54, R61, R62`
 
-The committed benchmark contains 30 acceptance cases, including public historical reconstructions for Stare Plavnice, V. OŠ Bjelovar, PŠ Ždralovi, and Tehnoguma, plus deterministic synthetic fixtures.
+The v0.1.1 hardening pass adds per-entity evaluation, cumulative budget-line checks, currency guards, temporal cutoff behavior, supplier-aware duplicate identity, tri-state baseline-change state, and stricter benchmark safety metrics.
+
+The committed benchmark contains 30 acceptance cases. Four public historical cases (Stare Plavnice, V. OŠ Bjelovar, PŠ Ždralovi, and Tehnoguma) are explicitly classified as **retrospective**. They are useful historical regression signals but are **not** counted as blind pre-cutoff prediction cases.
 
 ## Windows local quick start
 
@@ -48,11 +52,16 @@ Acceptance thresholds:
 
 - pass rate >= 98%
 - CRITICAL false positives = 0
+- CRITICAL false negatives = 0
 - UNKNOWN discipline >= 95%
-- HIGH/CRITICAL source completeness = 100%
+- explicitly source-required findings = 100% source-complete
+- pre-cutoff fixture temporal integrity = 100%
+
+The benchmark summary also reports the number of retrospective and genuine pre-cutoff historical cases. A zero count of pre-cutoff historical cases must not be presented as predictive validation.
 
 See `docs/benchmark-financial-integrity-core.md` for rule-to-benchmark traceability.
 
-## Repository note
+## Reference artifacts
 
-The machine-readable benchmark and executable tests are committed directly in this repository. The larger planning spreadsheet and implementation-plan artifact were produced during design/validation and are intentionally kept outside the source tree for now.
+- `docs/ProjektGuard_Benchmark_v1.xlsx` — human-readable rule/case matrix.
+- `docs/Financial_Integrity_Core_Implementation_Plan.md` — TDD plan for the first engine slice.

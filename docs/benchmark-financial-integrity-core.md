@@ -1,48 +1,66 @@
-# ProjektGuard Financial Integrity Core — Benchmark Contract
+# ProjektGuard Financial Integrity Core — Benchmark Contract v0.1.1
 
 ## Purpose
 
-This benchmark is the executable contract for the first ProjektGuard audit slice. Each manifest row maps one canonical rule to a normalized JSON fixture and an expected verdict. Historical fixtures contain only facts supported by the public reconstruction; unavailable invoice, bank, approval, or evidentiary facts remain absent rather than being invented.
+This benchmark is the executable contract for the first ProjektGuard audit slice. Each manifest row maps one canonical rule to a normalized JSON fixture and an expected verdict.
 
-A historical correction or supplement is treated as a **ground-truth signal**, not proof that ProjektGuard predicted the exact controller reason unless the underlying controller document is public.
+The benchmark distinguishes three modes:
+
+- `synthetic` — deterministic acceptance/regression fixture;
+- `retrospective` — historical reconstruction that may use evidence published after the original project event;
+- `pre_cutoff` — strict historical snapshot where every evidence source/fact used by the engine must have been observable on or before `as_of`.
+
+A retrospective correction or supplement is a **ground-truth signal**, not proof that ProjektGuard predicted the controller's exact reason. Only `pre_cutoff` cases may be used for predictive/blind-validation claims.
+
+## Safety behavior added in v0.1.1
+
+- Rules that apply to costs/contracts evaluate every relevant entity rather than item zero.
+- Findings may carry `subject_type` and `subject_id` so a warning is attributable to a concrete cost/contract/budget line.
+- Costs and payments dated after `as_of` are not used in the audit snapshot.
+- Contract execution totals can carry observation dates; future-observed totals are unavailable at an earlier cutoff.
+- Cross-currency comparisons never silently compare raw numeric values.
+- R09 uses cumulative spend per approved budget line, not a single invoice.
+- R30 verifies payment evidence per claimed/observable cost.
+- `baseline_changed` is tri-state; absent knowledge produces `UNKNOWN`.
+- Duplicate identity uses supplier/document identity rather than invoice number alone.
 
 ## Traceability
 
 | Rule | Check | Benchmark coverage | Historical/public trace where applicable |
 |---|---|---|---|
-| R04 | Cost eligibility date | synthetic valid + outside-period fixtures; future public-data UNKNOWN fixtures | n/a |
-| R07 | Budget line exists | synthetic found + missing fixtures | n/a |
-| R09 | Budget ceiling | synthetic within + exceeded fixtures | n/a |
-| R11 | Current budget version | synthetic current + no-current; B04-style baseline/version logic | B04: https://www.bjelovar.hr/akti-gradonacelnika-srpanj-2021-rujan-2021/ |
-| R18 | Contract vs award | synthetic exact + material mismatch fixtures | n/a |
-| R22 | Procurement vs invoicing | synthetic within + over-contract fixtures; B03-style execution logic | B03: https://www.bjelovar.hr/akti-gradonacelnika-srpanj-2020-rujan-2020/ |
-| R26 | Duplicate invoice | synthetic unique + duplicate invoice fixtures | n/a |
-| R30 | Payment evidence | synthetic missing (`UNKNOWN`) + linked bank evidence (`VERIFIED`) | public project files generally lack full bank evidence |
-| R32 | Invoice/payment reconciliation | synthetic exact + material mismatch fixtures | n/a |
-| R44 | Duplicate claim | synthetic unique + duplicate ZNS claim fixture | n/a |
-| R51 | Paid amount vs contract | synthetic within + B03 Stare Plavnice-style historical fixture | https://www.bjelovar.hr/akti-gradonacelnika-srpanj-2020-rujan-2020/ |
-| R53 | Execution vs project baseline | synthetic within + over-baseline fixtures; B03-style historical logic | https://www.bjelovar.hr/akti-gradonacelnika-srpanj-2020-rujan-2020/ |
-| R54 | Baseline change approval | synthetic approved + B04 V. OŠ historical `UNKNOWN` fixture | https://www.bjelovar.hr/akti-gradonacelnika-srpanj-2021-rujan-2021/ |
-| R61 | Materiality tolerance | B05 PŠ Ždralovi 4-HRK-style fixture + synthetic material difference | https://www.bjelovar.hr/akti-gradonacelnika-srpanj-2019-rujan-2019/ |
-| R62 | Total/eligible/grant distinction | B06 Tehnoguma historical valid layering + synthetic invalid ordering | https://tehnoguma-zg.hr/eu-projekti/energetski-i-resursno-ucinkovita-tranzicija-poduzeca-tehnoguma-d-o-o/ |
+| R04 | Cost eligibility date | synthetic valid + observable outside-period fixtures; adversarial future-cutoff test | n/a |
+| R07 | Budget line exists | synthetic found + missing; adversarial multi-cost mapping | n/a |
+| R09 | Cumulative budget ceiling | synthetic within + exceeded; adversarial cumulative, unapproved-budget and currency tests | n/a |
+| R11 | Active budget version | synthetic current + no-current + unapproved version behavior | B04 context |
+| R18 | Contract vs award | synthetic exact + material mismatch; adversarial multi-contract + currency mismatch | n/a |
+| R22 | Contract vs invoicing | synthetic within + over; adversarial multi-contract | B03-style execution logic |
+| R26 | Duplicate invoice identity | supplier/document-aware synthetic + adversarial different-supplier case | n/a |
+| R30 | Payment evidence | missing + linked bank evidence + adversarial per-claimed-cost coverage | public project files generally lack full bank evidence |
+| R32 | Invoice/payment reconciliation | exact + material mismatch + adversarial multi-cost/currency/cutoff tests | n/a |
+| R44 | Duplicate claim | repeated cost-id + duplicate invoice identity across different cost IDs | n/a |
+| R51 | Paid amount vs contract | synthetic within + B03 retrospective + adversarial multi-contract/cutoff | Stare Plavnice |
+| R53 | Execution vs project baseline | synthetic within + over + cross-currency expert-review test | B03-style historical logic |
+| R54 | Baseline change approval | synthetic approved + B04 retrospective `UNKNOWN` + tri-state regression | V. OŠ Bjelovar |
+| R61 | Materiality tolerance | B05 retrospective four-HRK delta + synthetic material difference + multi-contract regression | PŠ Ždralovi |
+| R62 | Total/eligible/grant distinction | B06 retrospective valid layering + synthetic invalid ordering | Tehnoguma |
 
-## Historical cases in v0.1
+## Historical cases in v0.1.1
 
-### B03 — Stare Plavnice
+### B03 — Stare Plavnice — `retrospective`
 
-The normalized fixture records the publicly reconstructed original works contract and later known paid execution. Public records also establish two subsequent supplement requests after the pre-cutoff state. The benchmark uses this as a category-level historical signal; it does **not** claim the controller's exact questions were caused by the contract delta.
+The fixture uses the later public contract register to reconstruct original contract value and known final execution. Its `as_of` is therefore the date that evidence was publicly observable, not 30 June 2020. The later supplement requests remain a category-level historical signal only.
 
-### B04 — V. osnovna škola Bjelovar
+### B04 — V. osnovna škola Bjelovar — `retrospective`
 
-The pre-cutoff fixture records that a project financial baseline change exists while the approval evidence is intentionally absent from the normalized state. Public records later show a final ZNS correction and an addendum. Expected verdict: `UNKNOWN`, not an accusation of an unapproved change.
+The fixture records a known financial-baseline change with approval evidence intentionally absent from normalized state. The public final-ZNS correction/addendum is a historical signal; this fixture is not counted as blind prediction.
 
-### B05 — PŠ Ždralovi
+### B05 — PŠ Ždralovi — `retrospective`
 
-The supervision contract pattern contains a four-HRK execution delta. With the published materiality policy (absolute 10 units, relative 0.1%), this must not create noisy HIGH findings. Public records separately establish a ZNS correction and procurement-plan update; the benchmark does not claim the four-HRK difference caused either event.
+The four-HRK supervision delta comes from a later public register and is used to regression-test materiality noise suppression. It is not represented as a pre-correction prediction.
 
-### B06 — Tehnoguma
+### B06 — Tehnoguma — `retrospective`
 
-The public project baseline distinguishes total project cost, eligible cost, and EU grant. R62 verifies only the logical financial layering represented in the normalized fixture; it does not infer invoice-level eligibility from public project marketing information.
+The completed public project baseline verifies only the distinction between total cost, eligible cost and grant amount. It does not infer invoice-level eligibility.
 
 ## Acceptance metrics
 
@@ -50,20 +68,29 @@ The CLI exits successfully only when all published gates pass:
 
 - `pass_rate >= 0.98`
 - `critical_false_positives == 0`
+- `critical_false_negatives == 0`
 - `unknown_discipline >= 0.95`
-- `high_critical_source_completeness == 1.0`
+- `high_critical_source_completeness == 1.0` for cases explicitly marked `requires_source`
+- `pre_cutoff_temporal_integrity == 1.0`
 
-`UNKNOWN` is a safety behavior: missing evidence must not be transformed into a fabricated compliance failure or approval.
+The summary always reports:
+
+- `source_required_cases`;
+- `pre_cutoff_cases`;
+- `retrospective_cases`.
+
+This prevents a vacuous 100% metric from being presented without its denominator.
 
 ## Adding a new rule or regression
 
 Every new behavior follows this sequence:
 
 1. real problem or reproducible bug;
-2. benchmark example;
-3. failing test;
-4. minimal implementation;
-5. passing test;
-6. historical/regression execution.
+2. failing adversarial/benchmark test;
+3. minimal implementation;
+4. passing focused test;
+5. full regression suite;
+6. benchmark execution;
+7. if historical, explicit `synthetic` / `retrospective` / `pre_cutoff` classification.
 
 Do not add rules solely because an AI feature sounds useful.

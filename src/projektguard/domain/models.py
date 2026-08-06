@@ -8,6 +8,7 @@ class SourceRef(BaseModel):
     document_id: str
     page: int | None = Field(default=None, ge=1)
     url: str | None = None
+    available_from: date | None = None
 
 
 class EligibilityPeriod(BaseModel):
@@ -55,7 +56,19 @@ class Contract(BaseModel):
     currency: str
     actual_invoiced: Decimal | None = None
     actual_paid: Decimal | None = None
+    actual_invoiced_observed_at: date | None = None
+    actual_paid_observed_at: date | None = None
     sources: list[SourceRef] = Field(default_factory=list)
+
+    def invoiced_as_of(self, as_of: date) -> Decimal | None:
+        if self.actual_invoiced_observed_at is not None and self.actual_invoiced_observed_at > as_of:
+            return None
+        return self.actual_invoiced
+
+    def paid_as_of(self, as_of: date) -> Decimal | None:
+        if self.actual_paid_observed_at is not None and self.actual_paid_observed_at > as_of:
+            return None
+        return self.actual_paid
 
 
 class Cost(BaseModel):
@@ -66,6 +79,7 @@ class Cost(BaseModel):
     currency: str
     budget_line_id: str
     contract_id: str | None = None
+    supplier_id: str | None = None
     document_hash: str | None = None
     sources: list[SourceRef] = Field(default_factory=list)
 
@@ -106,10 +120,10 @@ class AuditContext(BaseModel):
     payments: list[Payment] = Field(default_factory=list)
     funding_streams: list[FundingStream] = Field(default_factory=list)
     claimed_cost_ids: list[str] = Field(default_factory=list)
-    baseline_changed: bool = False
+    baseline_changed: bool | None = None
     baseline_approval_source: SourceRef | None = None
 
-    def current_budget(self) -> BudgetVersion | None:
+    def active_budget(self) -> BudgetVersion | None:
         eligible = [
             budget
             for budget in self.budget_versions
@@ -119,3 +133,24 @@ class AuditContext(BaseModel):
         if not eligible:
             return None
         return max(eligible, key=lambda budget: budget.version)
+
+    def current_approved_budget(self) -> BudgetVersion | None:
+        eligible = [budget for budget in self.budget_versions if budget.approved]
+        eligible = [
+            budget
+            for budget in eligible
+            if budget.valid_from <= self.as_of
+            and (budget.valid_to is None or self.as_of <= budget.valid_to)
+        ]
+        if not eligible:
+            return None
+        return max(eligible, key=lambda budget: budget.version)
+
+    def current_budget(self) -> BudgetVersion | None:
+        return self.current_approved_budget()
+
+    def observable_costs(self) -> list[Cost]:
+        return [cost for cost in self.costs if cost.invoice_date <= self.as_of]
+
+    def observable_payments(self) -> list[Payment]:
+        return [payment for payment in self.payments if payment.payment_date <= self.as_of]
