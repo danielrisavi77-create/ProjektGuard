@@ -4,7 +4,7 @@ from enum import Enum
 
 from pydantic import BaseModel, Field
 
-from projektguard.domain.models import SourceRef
+from projektguard.domain.source import SourceRef
 
 
 class EvidenceType(str, Enum):
